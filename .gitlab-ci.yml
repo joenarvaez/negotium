@@ -7,6 +7,8 @@ mirror:
     GIT_STRATEGY: clone
     GIT_DEPTH: 0
   script:
+    - mkdir -p ~/.ssh && echo "$GITHUB_DEPLOY_KEY" | base64 -d > ~/.ssh/id_ed25519 && chmod 600 ~/.ssh/id_ed25519
+    - ssh-keyscan github.com >> ~/.ssh/known_hosts
     - git checkout -B main
     - git push --mirror git@github.com:joenarvaez/negotium.git
   only:
