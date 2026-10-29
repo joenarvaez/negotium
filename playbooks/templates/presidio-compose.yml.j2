@@ -1,0 +1,11 @@
+services:
+  presidio-analyzer:
+    image: ghcr.io/data-privacy-stack/presidio-analyzer:{{ presidio_version }}
+    restart: unless-stopped
+    ports:
+      - "127.0.0.1:5002:3000"
+  presidio-anonymizer:
+    image: ghcr.io/data-privacy-stack/presidio-anonymizer:{{ presidio_version }}
+    restart: unless-stopped
+    ports:
+      - "127.0.0.1:5001:3000"

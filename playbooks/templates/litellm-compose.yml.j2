@@ -1,0 +1,12 @@
+services:
+  litellm:
+    image: ghcr.io/berriai/litellm:{{ litellm_version }}
+    restart: unless-stopped
+    # Reason: host network reaches Strata, Ollama and Presidio on localhost.
+    network_mode: host
+    environment:
+      STRATA_API_KEY: "{{ strata_api_key }}"
+      LITELLM_MASTER_KEY: "{{ litellm_master_key }}"
+    volumes:
+      - ./config.yaml:/app/config.yaml:ro
+    command: ["--config", "/app/config.yaml", "--host", "{{ tailscale_ip }}", "--port", "4000"]

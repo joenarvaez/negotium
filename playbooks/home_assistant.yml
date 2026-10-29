@@ -1,0 +1,64 @@
+# Step 5 — Home Assistant + the Wyoming bridge to speech_io.
+# HA owns voice; anything its intents can't match falls back to OpenClaw
+# (system_adr.md §6). Onboarding and integrations are set in the HA UI.
+
+- name: Create Home Assistant config directory
+  file:
+    path: "{{ docker_dir }}/home-assistant/config"
+    state: directory
+    mode: "0755"
+  tags: [home_assistant]
+
+- name: Copy Home Assistant configuration.yaml
+  template:
+    src: ha-configuration.yaml.j2
+    dest: "{{ docker_dir }}/home-assistant/config/configuration.yaml"
+    mode: "0644"
+  register: ha_config
+  tags: [home_assistant]
+
+- name: Copy Home Assistant docker-compose.yml
+  template:
+    src: ha-compose.yml.j2
+    dest: "{{ docker_dir }}/home-assistant/docker-compose.yml"
+    mode: "0644"
+  tags: [home_assistant]
+
+- name: Start Home Assistant
+  command: docker compose up -d
+  args:
+    chdir: "{{ docker_dir }}/home-assistant"
+  register: ha_up
+  changed_when: "'Started' in ha_up.stderr or 'Recreated' in ha_up.stderr"
+  tags: [home_assistant]
+
+- name: Restart Home Assistant on config change
+  # Reason: configuration.yaml is a mount, so compose doesn't see it change.
+  command: docker compose restart home-assistant
+  args:
+    chdir: "{{ docker_dir }}/home-assistant"
+  when: ha_config.changed and 'Started' not in ha_up.stderr
+  tags: [home_assistant]
+
+- name: Wait for Home Assistant to be ready
+  uri:
+    url: "http://{{ tailscale_ip }}:8123/manifest.json"
+  register: result
+  until: result.status == 200
+  retries: 90
+  delay: 2
+  tags: [home_assistant]
+
+- name: Verify the Wyoming bridge offers speech to text and text to speech
+  shell: |
+    exec 3<>/dev/tcp/127.0.0.1/10300
+    echo '{"type": "describe"}' >&3
+    timeout 5 cat <&3 || true
+  args:
+    executable: /bin/bash
+  register: wyoming_verify
+  retries: 15
+  delay: 2
+  until: "'asr' in wyoming_verify.stdout and 'tts' in wyoming_verify.stdout"
+  changed_when: false
+  tags: [home_assistant]

@@ -1,0 +1,76 @@
+# Step 4 — speech_io: Whisper (speech to text) + Kokoro (text to speech).
+# One Speaches container serves both over the OpenAI audio API, on CPU
+# (Strata has the GPUs). Bound to localhost: Home Assistant and OpenClaw call it.
+
+- name: Create speech directory
+  file:
+    path: "{{ docker_dir }}/speech"
+    state: directory
+    mode: "0755"
+  tags: [speech]
+
+- name: Copy speech docker-compose.yml
+  template:
+    src: speech-compose.yml.j2
+    dest: "{{ docker_dir }}/speech/docker-compose.yml"
+    mode: "0644"
+  tags: [speech]
+
+- name: Start Speaches
+  command: docker compose up -d
+  args:
+    chdir: "{{ docker_dir }}/speech"
+  register: speech_up
+  changed_when: "'Started' in speech_up.stderr or 'Recreated' in speech_up.stderr"
+  tags: [speech]
+
+- name: Wait for Speaches to be ready
+  uri:
+    url: http://127.0.0.1:8001/health
+  register: result
+  until: result.status == 200
+  retries: 60
+  delay: 2
+  tags: [speech]
+
+- name: List installed speech models
+  uri:
+    url: http://127.0.0.1:8001/v1/models
+  register: speech_models
+  changed_when: false
+  tags: [speech]
+
+- name: Download missing speech models
+  uri:
+    url: "http://127.0.0.1:8001/v1/models/{{ item }}"
+    method: POST
+    status_code: [200, 201]
+    timeout: 900
+  loop: "{{ [whisper_model, kokoro_model] | difference(speech_models.json.data | map(attribute='id') | list) }}"
+  changed_when: true
+  tags: [speech]
+
+- name: Verify Kokoro speaks
+  uri:
+    url: http://127.0.0.1:8001/v1/audio/speech
+    method: POST
+    body_format: json
+    body:
+      model: "{{ kokoro_model }}"
+      voice: "{{ kokoro_voice }}"
+      input: "Ready."
+      response_format: wav
+    dest: /tmp/negotium-speech-check.wav
+    timeout: 300
+  changed_when: false
+  tags: [speech]
+
+- name: Verify Whisper hears what Kokoro said
+  # Reason: round trip proves both directions with one fixture.
+  command: >
+    curl -sf http://127.0.0.1:8001/v1/audio/transcriptions
+    -F file=@/tmp/negotium-speech-check.wav -F model={{ whisper_model }}
+  register: speech_verify
+  failed_when: "'ready' not in (speech_verify.stdout | lower)"
+  changed_when: false
+  tags: [speech]

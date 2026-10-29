@@ -1,0 +1,50 @@
+# Step 2 — Presidio analyzer + anonymizer.
+# LiteLLM calls these to mask PII before a prompt leaves the server
+# (system_adr.md §2). Bound to localhost: only LiteLLM talks to them.
+
+- name: Create Presidio directory
+  file:
+    path: "{{ docker_dir }}/presidio"
+    state: directory
+    mode: "0755"
+  tags: [presidio]
+
+- name: Copy Presidio docker-compose.yml
+  template:
+    src: presidio-compose.yml.j2
+    dest: "{{ docker_dir }}/presidio/docker-compose.yml"
+    mode: "0644"
+  tags: [presidio]
+
+- name: Start Presidio
+  # Reason: `up -d` is itself idempotent and also picks up compose changes.
+  command: docker compose up -d
+  args:
+    chdir: "{{ docker_dir }}/presidio"
+  register: presidio_up
+  changed_when: "'Started' in presidio_up.stderr or 'Recreated' in presidio_up.stderr"
+  tags: [presidio]
+
+- name: Wait for the analyzer to be ready
+  uri:
+    url: http://127.0.0.1:5002/health
+  register: result
+  until: result.status == 200
+  retries: 60
+  delay: 2
+  tags: [presidio]
+
+- name: Verify Presidio finds and masks a name and phone number
+  uri:
+    url: http://127.0.0.1:5002/analyze
+    method: POST
+    body_format: json
+    body:
+      text: "Call Dr. Lee at 415-555-0134"
+      language: en
+  register: presidio_verify
+  failed_when: >
+    'PERSON' not in (presidio_verify.json | map(attribute='entity_type') | list) or
+    'PHONE_NUMBER' not in (presidio_verify.json | map(attribute='entity_type') | list)
+  changed_when: false
+  tags: [presidio]

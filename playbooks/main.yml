@@ -1,0 +1,44 @@
+# negotium personal server.
+# Steps run in dependency order; each ends with a verify task.
+#   (Strata, the local model, is installed by tooling-playbooks.)
+#   2. presidio — PII masking
+#   3. litellm  — model gateway (needs Strata and 2)
+#   4. speech   — Whisper + Kokoro
+#   5. home assistant (needs 3, 4)
+#   6. openclaw (needs 3, Twilio, privacy.com)
+
+- name: negotium
+  hosts: all
+  vars:
+    presidio_version: "latest"
+    docker_dir: /home/admin/docker
+    litellm_version: "main-stable"
+    strata_model: "qwen3.8-flash-next-coder-iq1_m"
+    tailscale_ip: "100.92.147.94"
+    speaches_version: "latest-cpu"
+    whisper_model: "Systran/faster-distil-whisper-small.en"
+    kokoro_model: "speaches-ai/Kokoro-82M-v1.0-ONNX"
+    kokoro_voice: "af_heart"
+    ha_version: "stable"
+    wyoming_openai_version: "latest"
+    timezone: "America/Chicago"
+  vars_files:
+    - secrets.yml
+
+  become: yes
+  tasks:
+    - name: Step 2 — Presidio
+      include_tasks: presidio.yml
+      tags: [presidio]
+
+    - name: Step 3 — LiteLLM
+      include_tasks: litellm.yml
+      tags: [litellm]
+
+    - name: Step 4 — Speech (Whisper + Kokoro)
+      include_tasks: speech.yml
+      tags: [speech]
+
+    - name: Step 5 — Home Assistant
+      include_tasks: home_assistant.yml
+      tags: [home_assistant]

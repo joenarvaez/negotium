@@ -1,0 +1,14 @@
+services:
+  speaches:
+    image: ghcr.io/speaches-ai/speaches:{{ speaches_version }}
+    restart: unless-stopped
+    ports:
+      - "127.0.0.1:8001:8000"
+    environment:
+      ENABLE_UI: "false"
+      WHISPER__COMPUTE_TYPE: int8
+      PRELOAD_MODELS: '["{{ whisper_model }}", "{{ kokoro_model }}"]'
+    volumes:
+      - hf-hub-cache:/home/ubuntu/.cache/huggingface/hub
+volumes:
+  hf-hub-cache:

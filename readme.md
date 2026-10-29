@@ -29,9 +29,7 @@ rectangle lan #line.dashed {
         rectangle home_assistant_voice
     }
     rectangle personal_server #line.dashed {
-        rectangle ollama {
-            rectangle qwen_small
-        }
+        rectangle strata
         rectangle openclaw
         rectangle presidio
         rectangle speech_io {
@@ -53,7 +51,7 @@ tailscale -d- openclaw
 tailscale -d- litellm
 litellm -d- presidio
 litellm - openclaw
-litellm -- qwen_small
+litellm -- strata
 presidio --d- deepseek
 presidio --d- qwen
 openclaw -d-- twilio
@@ -71,7 +69,7 @@ participant openclaw_client
 participant openclaw
 participant speech_io
 participant litellm
-participant qwen_small
+participant strata
 participant qwen
 participant twilio
 actor airline
@@ -96,7 +94,7 @@ loop on hold
     airline -> openclaw : audio
     openclaw -> speech_io : whisper
     openclaw -> litellm : hold music or human?
-    litellm -> qwen_small : local only
+    litellm -> strata : local only
 end
 
 openclaw -> airline : "one moment, connecting you"
@@ -210,6 +208,7 @@ opencode -> repo : push feature
 #### Home Automation
 ```plantuml
 actor user
+participant openclaw_client
 participant home_assistant_voice
 participant home_assistant
 participant speech_io
@@ -242,4 +241,17 @@ openclaw -> home_assistant : play ong bak on living room tv
 openclaw -> home_assistant : reply
 home_assistant -> speech_io : kokoro
 home_assistant_voice -> user : "thai movie night is set"
+
+== from the phone ==
+user -> openclaw_client : "set up thai movie night at home"
+openclaw_client -> openclaw : transcript
+openclaw -> openclaw : recall my tastes
+openclaw -> litellm : plan the night
+litellm -> qwen : masked prompt
+openclaw -> home_assistant : living room lights warm and dim
+openclaw -> home_assistant : play thai ambient instrumentals
+openclaw -> delivery_app : order favorite thai dish
+openclaw -> home_assistant : play ong bak on living room tv
+openclaw -> openclaw_client : reply
+openclaw_client -> user : "thai movie night is set"
 ```

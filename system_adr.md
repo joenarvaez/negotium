@@ -20,7 +20,7 @@ Presidio runs as a LiteLLM guardrail and swaps personal data for placeholders (`
 
 *Why.* Masking hides names and numbers, not what the task is about. Some tasks are too sensitive to send out even masked.
 
-High-risk tasks (health, finances, passwords) run on the small local Qwen in Ollama. Everything else can go to a rented model, masked.
+High-risk tasks (health, finances, passwords) run on Strata (Qwen3.8-Flash-Next Coder) on the personal server. Everything else can go to a rented model, masked.
 
 ### §4. Model per tool
 
@@ -30,7 +30,7 @@ High-risk tasks (health, finances, passwords) run on the small local Qwen in Oll
 |---|---|
 | OpenClaw, Nanobrowser | Qwen |
 | OpenCode, Open Design, Goose | DeepSeek |
-| Hold detection, high-risk tasks | small local Qwen |
+| Hold detection, high-risk tasks | Strata (local) |
 
 ### §5. Tailscale is the only door
 

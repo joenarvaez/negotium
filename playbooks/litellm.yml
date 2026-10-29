@@ -1,0 +1,82 @@
+# Step 3 — LiteLLM, the only model gateway (system_adr.md §1).
+# Every prompt goes through the Presidio guardrail (§2). Bound to the
+# Tailscale IP only (§5).
+
+- name: Create LiteLLM directory
+  file:
+    path: "{{ docker_dir }}/litellm"
+    state: directory
+    mode: "0755"
+  tags: [litellm]
+
+- name: Copy LiteLLM config.yaml
+  template:
+    src: litellm-config.yaml.j2
+    dest: "{{ docker_dir }}/litellm/config.yaml"
+    mode: "0644"
+  register: litellm_config
+  tags: [litellm]
+
+- name: Copy LiteLLM docker-compose.yml
+  template:
+    src: litellm-compose.yml.j2
+    dest: "{{ docker_dir }}/litellm/docker-compose.yml"
+    mode: "0600"
+  tags: [litellm]
+
+- name: Start LiteLLM
+  command: docker compose up -d
+  args:
+    chdir: "{{ docker_dir }}/litellm"
+  register: litellm_up
+  changed_when: "'Started' in litellm_up.stderr or 'Recreated' in litellm_up.stderr"
+  tags: [litellm]
+
+- name: Restart LiteLLM on config change
+  # Reason: config.yaml is a mount, so compose doesn't see it change.
+  command: docker compose restart
+  args:
+    chdir: "{{ docker_dir }}/litellm"
+  when: litellm_config.changed and 'Started' not in litellm_up.stderr
+  tags: [litellm]
+
+- name: Wait for LiteLLM to be ready
+  uri:
+    url: "http://{{ tailscale_ip }}:4000/health/readiness"
+  register: result
+  until: result.status == 200
+  retries: 60
+  delay: 2
+  tags: [litellm]
+
+- name: Verify the guardrail masks a name
+  uri:
+    url: "http://{{ tailscale_ip }}:4000/guardrails/apply_guardrail"
+    method: POST
+    headers:
+      Authorization: "Bearer {{ litellm_master_key }}"
+    body_format: json
+    body:
+      guardrail_name: presidio-pii
+      text: "Call Dr. Lee at 415-555-0134"
+  register: litellm_mask
+  failed_when: "'Lee' in litellm_mask.json.response_text"
+  changed_when: false
+  tags: [litellm]
+
+- name: Verify each model answers through LiteLLM
+  uri:
+    url: "http://{{ tailscale_ip }}:4000/v1/chat/completions"
+    method: POST
+    headers:
+      Authorization: "Bearer {{ litellm_master_key }}"
+    body_format: json
+    body:
+      model: "{{ item }}"
+      messages: [{role: user, content: "Reply with the single word: ready"}]
+    timeout: 300
+  register: litellm_verify
+  failed_when: "'ready' not in (litellm_verify.json.choices[0].message.content | lower)"
+  changed_when: false
+  loop: [strata]
+  tags: [litellm]
