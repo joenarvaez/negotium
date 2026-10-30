@@ -1,6 +1,6 @@
 # Step 5 — Home Assistant + the Wyoming bridge to speech_io.
 # HA owns voice; anything its intents can't match falls back to OpenClaw
-# (system_adr.md §6). Onboarding and integrations are set in the HA UI.
+# (system_adr.md §6).
 
 - name: Create Home Assistant config directory
   file:
@@ -61,4 +61,19 @@
   delay: 2
   until: "'asr' in wyoming_verify.stdout and 'tts' in wyoming_verify.stdout"
   changed_when: false
+  tags: [home_assistant]
+
+- name: Copy the Home Assistant setup script
+  template:
+    src: ha-setup.py.j2
+    dest: "{{ docker_dir }}/home-assistant/config/negotium_setup.py"
+    mode: "0644"
+  tags: [home_assistant]
+
+- name: Onboard Home Assistant, point Assist at Whisper and Kokoro, enable MCP
+  command: docker exec -e HA_OWNER_PASSWORD home-assistant-home-assistant-1 python3 /config/negotium_setup.py core
+  environment:
+    HA_OWNER_PASSWORD: "{{ ha_owner_password }}"
+  register: ha_setup
+  changed_when: (ha_setup.stdout | from_json).changed
   tags: [home_assistant]

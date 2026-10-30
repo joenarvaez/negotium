@@ -5,7 +5,16 @@
     "port": 18789,
     "trustedProxies": ["127.0.0.1"],
     "auth": { "mode": "token", "token": "${OPENCLAW_GATEWAY_TOKEN}" },
-    "http": { "endpoints": { "chatCompletions": { "enabled": true } } }
+    "http": { "endpoints": { "chatCompletions": { "enabled": true }, "responses": { "enabled": true } } }
+  },
+  "mcp": {
+    "servers": {
+      "home_assistant": {
+        "url": "http://127.0.0.1:8123/api/mcp",
+        "transport": "streamable-http",
+        "headers": { "Authorization": "Bearer ${HA_TOKEN}" }
+      }
+    }
   },
   "models": {
     "providers": {

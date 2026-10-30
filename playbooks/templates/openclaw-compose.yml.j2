@@ -11,6 +11,7 @@ services:
       OPENCLAW_CONFIG_PATH: /home/node/.openclaw/openclaw.json
       OPENCLAW_GATEWAY_TOKEN: "{{ openclaw_gateway_token }}"
       LITELLM_API_KEY: "{{ litellm_master_key }}"
+      HA_TOKEN: "{{ ha_openclaw_token }}"
       TZ: "{{ timezone }}"
     volumes:
       - ./state:/home/node/.openclaw

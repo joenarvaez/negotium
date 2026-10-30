@@ -2,6 +2,19 @@
 # Its model is Strata through LiteLLM (§1). Bound to the Tailscale IP
 # (and localhost, for Home Assistant's fallback).
 
+- name: Read the Home Assistant token for OpenClaw (made in step 5)
+  slurp:
+    src: "{{ docker_dir }}/home-assistant/config/.openclaw_token"
+  register: ha_token_file
+  no_log: true
+  tags: [openclaw]
+
+- name: Set the Home Assistant token
+  set_fact:
+    ha_openclaw_token: "{{ ha_token_file.content | b64decode }}"
+  no_log: true
+  tags: [openclaw]
+
 - name: Create OpenClaw state directory
   file:
     path: "{{ docker_dir }}/openclaw/state"
@@ -14,7 +27,7 @@
 
 - name: Seed openclaw.json
   # Reason: OpenClaw rewrites its own config (migrations, doctor), so this only
-  # seeds a fresh install. To change it later, edit it on the box or delete it and re-run.
+  # seeds a fresh install. Later runs patch in just the keys we own, below.
   template:
     src: openclaw.json.j2
     dest: "{{ docker_dir }}/openclaw/state/openclaw.json"
@@ -40,11 +53,31 @@
   changed_when: "'Started' in openclaw_up.stderr or 'Recreated' in openclaw_up.stderr"
   tags: [openclaw]
 
-- name: Restart OpenClaw after seeding its config
+- name: Read the live openclaw.json
+  slurp:
+    src: "{{ docker_dir }}/openclaw/state/openclaw.json"
+  register: openclaw_live
+  tags: [openclaw]
+
+- name: Patch in the keys we own if they drifted
+  command: docker exec -i openclaw-openclaw-1 node dist/index.js config patch --stdin
+  args:
+    stdin: "{{ lookup('template', 'openclaw.json.j2') }}"
+  vars:
+    live: "{{ openclaw_live.content | b64decode | from_json }}"
+  when: live | combine(lookup('template', 'openclaw.json.j2') | from_json, recursive=True) != live
+  register: openclaw_patch
+  # Reason: right after a (re)start OpenClaw runs state maintenance and refuses config reads.
+  until: openclaw_patch.rc == 0
+  retries: 20
+  delay: 3
+  tags: [openclaw]
+
+- name: Restart OpenClaw after a config change
   command: docker compose restart
   args:
     chdir: "{{ docker_dir }}/openclaw"
-  when: openclaw_config.changed and 'Started' not in openclaw_up.stderr
+  when: (openclaw_config.changed or openclaw_patch.changed) and 'Started' not in openclaw_up.stderr
   tags: [openclaw]
 
 - name: Check Tailscale Serve for OpenClaw
@@ -91,5 +124,30 @@
     timeout: 300
   register: openclaw_https_verify
   failed_when: "'ready' not in (openclaw_https_verify.json.choices[0].message.content | lower)"
+  changed_when: false
+  tags: [openclaw]
+
+- name: Send unmatched Home Assistant commands to OpenClaw
+  command: docker exec -e HA_OWNER_PASSWORD -e OPENCLAW_GATEWAY_TOKEN home-assistant-home-assistant-1 python3 /config/negotium_setup.py fallback
+  environment:
+    HA_OWNER_PASSWORD: "{{ ha_owner_password }}"
+    OPENCLAW_GATEWAY_TOKEN: "{{ openclaw_gateway_token }}"
+  register: ha_fallback
+  changed_when: (ha_fallback.stdout | from_json).changed
+  tags: [openclaw]
+
+- name: Verify Home Assistant reaches OpenClaw
+  uri:
+    url: http://127.0.0.1:8123/api/conversation/process
+    method: POST
+    headers:
+      Authorization: "Bearer {{ ha_openclaw_token }}"
+    body_format: json
+    body:
+      text: "Reply with the single word: ready"
+      agent_id: conversation.openclaw_default
+    timeout: 300
+  register: ha_openclaw_verify
+  failed_when: "'ready' not in (ha_openclaw_verify.json.response.speech.plain.speech | lower)"
   changed_when: false
   tags: [openclaw]
