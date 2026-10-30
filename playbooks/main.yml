@@ -15,6 +15,7 @@
     litellm_version: "main-stable"
     strata_model: "qwen3.8-flash-next-coder-iq1_m"
     tailscale_ip: "100.92.147.94"
+    tailscale_hostname: "arketyped.tail5a2469.ts.net"
     speaches_version: "latest-cpu"
     whisper_model: "Systran/faster-distil-whisper-small.en"
     kokoro_model: "speaches-ai/Kokoro-82M-v1.0-ONNX"
@@ -22,6 +23,7 @@
     ha_version: "stable"
     wyoming_openai_version: "latest"
     timezone: "America/Chicago"
+    openclaw_version: "latest"
   vars_files:
     - secrets.yml
 
@@ -42,3 +44,7 @@
     - name: Step 5 — Home Assistant
       include_tasks: home_assistant.yml
       tags: [home_assistant]
+
+    - name: Step 6 — OpenClaw
+      include_tasks: openclaw.yml
+      tags: [openclaw]

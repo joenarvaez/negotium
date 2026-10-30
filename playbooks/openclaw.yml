@@ -1,0 +1,95 @@
+# Step 6 — OpenClaw gateway, the brain (system_adr.md §6).
+# Its model is Strata through LiteLLM (§1). Bound to the Tailscale IP
+# (and localhost, for Home Assistant's fallback).
+
+- name: Create OpenClaw state directory
+  file:
+    path: "{{ docker_dir }}/openclaw/state"
+    state: directory
+    # Reason: the image runs as the node user, uid 1000.
+    owner: "1000"
+    group: "1000"
+    mode: "0700"
+  tags: [openclaw]
+
+- name: Seed openclaw.json
+  # Reason: OpenClaw rewrites its own config (migrations, doctor), so this only
+  # seeds a fresh install. To change it later, edit it on the box or delete it and re-run.
+  template:
+    src: openclaw.json.j2
+    dest: "{{ docker_dir }}/openclaw/state/openclaw.json"
+    owner: "1000"
+    group: "1000"
+    mode: "0600"
+    force: no
+  register: openclaw_config
+  tags: [openclaw]
+
+- name: Copy OpenClaw docker-compose.yml
+  template:
+    src: openclaw-compose.yml.j2
+    dest: "{{ docker_dir }}/openclaw/docker-compose.yml"
+    mode: "0600"
+  tags: [openclaw]
+
+- name: Start OpenClaw
+  command: docker compose up -d
+  args:
+    chdir: "{{ docker_dir }}/openclaw"
+  register: openclaw_up
+  changed_when: "'Started' in openclaw_up.stderr or 'Recreated' in openclaw_up.stderr"
+  tags: [openclaw]
+
+- name: Restart OpenClaw after seeding its config
+  command: docker compose restart
+  args:
+    chdir: "{{ docker_dir }}/openclaw"
+  when: openclaw_config.changed and 'Started' not in openclaw_up.stderr
+  tags: [openclaw]
+
+- name: Check Tailscale Serve for OpenClaw
+  command: tailscale serve status --json
+  register: serve_status
+  changed_when: false
+  tags: [openclaw]
+
+- name: Serve OpenClaw over HTTPS on the tailnet
+  # Reason: the Android app needs wss:// for Tailscale hosts. Caddy holds 443, so 8443.
+  command: tailscale serve --bg --https=8443 http://127.0.0.1:18789
+  when: "':8443' not in serve_status.stdout"
+  tags: [openclaw]
+
+- name: Verify OpenClaw answers through Strata
+  uri:
+    url: "http://{{ tailscale_ip }}:18789/v1/chat/completions"
+    method: POST
+    headers:
+      Authorization: "Bearer {{ openclaw_gateway_token }}"
+    body_format: json
+    body:
+      model: openclaw/default
+      messages: [{role: user, content: "Reply with the single word: ready"}]
+    timeout: 300
+  register: openclaw_verify
+  until: openclaw_verify.status == 200
+  retries: 30
+  delay: 5
+  failed_when: "openclaw_verify.status != 200 or 'ready' not in (openclaw_verify.json.choices[0].message.content | lower)"
+  changed_when: false
+  tags: [openclaw]
+
+- name: Verify OpenClaw is reachable over HTTPS
+  uri:
+    url: "https://{{ tailscale_hostname }}:8443/v1/chat/completions"
+    method: POST
+    headers:
+      Authorization: "Bearer {{ openclaw_gateway_token }}"
+    body_format: json
+    body:
+      model: openclaw/default
+      messages: [{role: user, content: "Reply with the single word: ready"}]
+    timeout: 300
+  register: openclaw_https_verify
+  failed_when: "'ready' not in (openclaw_https_verify.json.choices[0].message.content | lower)"
+  changed_when: false
+  tags: [openclaw]
