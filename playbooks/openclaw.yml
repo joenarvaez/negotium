@@ -1,5 +1,5 @@
-# Step 6 — OpenClaw gateway, the brain (system_adr.md §6).
-# Its model is Strata through LiteLLM (§1). Bound to the Tailscale IP
+# Step 6 — OpenClaw gateway, the brain (system_adr.md §5).
+# Its model is Qwen through LiteLLM (§1). Bound to the Tailscale IP
 # (and localhost, for Home Assistant's fallback).
 
 - name: Read the Home Assistant token for OpenClaw (made in step 5)

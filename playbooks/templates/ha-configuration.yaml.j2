@@ -1,7 +1,7 @@
 default_config:
 
 http:
-  # Reason: reachable over Tailscale and from the box itself, never the public IP (system_adr.md §5).
+  # Reason: reachable over Tailscale and from the box itself, never the public IP.
   server_host:
     - 127.0.0.1
     - {{ tailscale_ip }}

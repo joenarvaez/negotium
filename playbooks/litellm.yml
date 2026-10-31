@@ -1,6 +1,6 @@
 # Step 3 — LiteLLM, the only model gateway (system_adr.md §1).
 # Every prompt goes through the Presidio guardrail (§2). Bound to the
-# Tailscale IP only (§5).
+# Tailscale IP only.
 
 - name: Create LiteLLM directory
   file:

@@ -1,6 +1,6 @@
 # Step 5 — Home Assistant + the Wyoming bridge to speech_io.
 # HA owns voice; anything its intents can't match falls back to OpenClaw
-# (system_adr.md §6).
+# (system_adr.md §5).
 
 - name: Create Home Assistant config directory
   file:

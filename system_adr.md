@@ -32,19 +32,13 @@ Vitals, medical records and bank data are stored only on the personal server. Ag
 | OpenCode, Open Design, Goose | DeepSeek |
 | Hold detection, passwords | Strata (local) |
 
-### §5. Tailscale is the only door
-
-*Why.* No ports open to the internet for the laptop or phone.
-
-The laptop and phone reach the server only over Tailscale. The smart speaker is on the LAN.
-
-### §6. Home Assistant owns voice, OpenClaw is the brain
+### §5. Home Assistant owns voice, OpenClaw is the brain
 
 *Why.* One wake word. Simple commands run in milliseconds without a model; everything else gets full memory and tools.
 
 Home Assistant matches deterministic intents first. Anything it can't match falls back to OpenClaw. Speech-to-text (Whisper) and text-to-speech (Kokoro) run on the server.
 
-### §7. Payments
+### §6. Payments
 
 *Why.* A one-time purchase from a merchant you don't have an account with is where a real card gets exposed. Everywhere else the card already lives inside the merchant's account.
 
