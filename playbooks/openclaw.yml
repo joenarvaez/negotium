@@ -90,10 +90,16 @@
     - {name: bridge-call, mode: "0755"}
   tags: [openclaw]
 
-- name: Tell the agent masked tags are real values
+- name: Tell the main agent how to work
   lineinfile:
     path: "{{ docker_dir }}/openclaw/state/workspace/AGENTS.md"
-    line: "{{ masked_values_note }}"
+    line: "{{ item }}"
+  loop:
+    - "{{ masked_values_note }}"
+    - >-
+      Phone calls are the phone agent's job: hand them over with sessions_spawn (agentId "phone"),
+      giving who to call, the number, the goal and every detail they'll need. It waits on hold and
+      connects the owner when a person answers.
   tags: [openclaw]
 
 - name: Read the live openclaw.json
@@ -141,7 +147,7 @@
   register: phone_allowlist
   # Reason: right after a restart OpenClaw runs state maintenance and refuses CLI writes.
   until: phone_allowlist.rc == 0
-  retries: 20
+  retries: 40
   delay: 3
   changed_when: false
   tags: [openclaw]

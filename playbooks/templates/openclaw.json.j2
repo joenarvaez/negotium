@@ -73,6 +73,10 @@
   "agents": {
     "defaults": { "model": { "primary": "litellm/qwen" } },
     "entries": {
+      "main": {
+        "tools": { "deny": ["voice_call"] },
+        "subagents": { "allowAgents": ["phone"] }
+      },
       "phone": {
         "name": "Phone",
         "workspace": "/home/node/.openclaw/workspace-phone",
