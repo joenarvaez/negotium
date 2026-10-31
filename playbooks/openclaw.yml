@@ -97,9 +97,9 @@
   loop:
     - "{{ masked_values_note }}"
     - >-
-      Phone calls are the phone agent's job: hand them over with sessions_spawn (agentId "phone"),
-      giving who to call, the number, the goal and any account or confirmation numbers the phone menu
-      may ask for. It works the menu, waits on hold and connects the owner when a person answers;
+      Phone calls are the phone agent's job: hand them over with sessions_spawn, agentId "phone",
+      and a task naming who to call, their number, the goal and any account or confirmation numbers
+      the phone menu may ask for. Only dial numbers the owner gave you for this call. It works the menu, waits on hold and connects the owner when a person answers;
       it never talks with people itself.
   tags: [openclaw]
 
@@ -123,6 +123,17 @@
   delay: 3
   tags: [openclaw]
 
+- name: Let the phone agent run only the bridge script
+  # Reason: callers can say anything; exec stays limited to this one command.
+  command: docker exec openclaw-openclaw-1 node dist/index.js approvals allowlist add --agent phone /home/node/.openclaw/workspace-phone/bridge-call
+  register: phone_allowlist
+  # Reason: runs before the restart below; right after one OpenClaw refuses CLI writes for minutes.
+  until: phone_allowlist.rc == 0
+  retries: 20
+  delay: 3
+  changed_when: false
+  tags: [openclaw]
+
 - name: Restart OpenClaw after a config change
   command: docker compose restart
   args:
@@ -140,17 +151,6 @@
   # Reason: the Android app needs wss:// for Tailscale hosts. Caddy holds 443, so 8443.
   command: tailscale serve --bg --https=8443 http://127.0.0.1:18789
   when: "':8443' not in serve_status.stdout"
-  tags: [openclaw]
-
-- name: Let the phone agent run only the bridge script
-  # Reason: callers can say anything; exec stays limited to this one command.
-  command: docker exec openclaw-openclaw-1 node dist/index.js approvals allowlist add --agent phone /home/node/.openclaw/workspace-phone/bridge-call
-  register: phone_allowlist
-  # Reason: right after a restart OpenClaw runs state maintenance and refuses CLI writes.
-  until: phone_allowlist.rc == 0
-  retries: 40
-  delay: 3
-  changed_when: false
   tags: [openclaw]
 
 - name: Open the Twilio webhook to the internet

@@ -74,7 +74,7 @@
     "defaults": { "model": { "primary": "litellm/qwen" } },
     "entries": {
       "main": {
-        "tools": { "deny": ["voice_call"] },
+        "tools": { "deny": ["voice-call"] },
         "subagents": { "allowAgents": ["phone"] }
       },
       "phone": {
@@ -82,7 +82,7 @@
         "workspace": "/home/node/.openclaw/workspace-phone",
         "model": "litellm/qwen_fast",
         "skills": [],
-        "tools": { "allow": ["voice_call", "exec"], "exec": { "mode": "allowlist" } }
+        "tools": { "allow": ["voice-call", "exec"], "exec": { "mode": "allowlist" } }
       }
     }
   }

@@ -6,6 +6,7 @@ You never talk with people. Your job ends when a person answers.
 
 ## Placing a call
 
+Dial only the number given in the task; if none is given, leave `to` empty (that rings the owner).
 Use `voice_call` `initiate_call` in `conversation` mode with no `message` (the call starts silent) and a
 `brief`: `task` (what the owner wants — it decides which menu options to pick), `context` (account and
 confirmation numbers the menu may ask for) and `successCriteria`: "a real person is on the line".
