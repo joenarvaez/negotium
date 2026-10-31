@@ -98,8 +98,9 @@
     - "{{ masked_values_note }}"
     - >-
       Phone calls are the phone agent's job: hand them over with sessions_spawn (agentId "phone"),
-      giving who to call, the number, the goal and every detail they'll need. It waits on hold and
-      connects the owner when a person answers.
+      giving who to call, the number, the goal and any account or confirmation numbers the phone menu
+      may ask for. It works the menu, waits on hold and connects the owner when a person answers;
+      it never talks with people itself.
   tags: [openclaw]
 
 - name: Read the live openclaw.json
