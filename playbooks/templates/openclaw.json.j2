@@ -43,6 +43,23 @@
           "publicUrl": "https://{{ tailscale_hostname }}:10000/voice/webhook",
           "webhookSecurity": { "allowedHosts": ["{{ tailscale_hostname }}"], "trustedProxyIPs": ["127.0.0.1"] },
           "outbound": { "defaultMode": "conversation" },
+          "streaming": {
+            "enabled": true,
+            "provider": "deepgram",
+            "streamPath": "/voice/stream",
+            "providers": { "deepgram": { "apiKey": "${DEEPGRAM_API_KEY}", "model": "nova-3", "endpointingMs": 800, "language": "en-US" } }
+          },
+          "tts": {
+            "provider": "openai",
+            "providers": {
+              "openai": {
+                "apiKey": "local",
+                "baseUrl": "http://127.0.0.1:8001/v1",
+                "model": "{{ kokoro_model }}",
+                "speakerVoice": "{{ kokoro_voice }}"
+              }
+            }
+          },
           "agentId": "phone",
           "sessionScope": "per-call",
           "responseTimeoutMs": 60000,
