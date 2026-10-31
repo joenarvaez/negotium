@@ -27,8 +27,6 @@
     kokoro_model: "speaches-ai/Kokoro-82M-v1.0-ONNX"
     kokoro_voice: "af_heart"
     ha_version: "stable"
-    ha_owner_name: "Joe"
-    ha_owner_username: "joe"
     wyoming_openai_version: "latest"
     timezone: "America/Chicago"
     openclaw_version: "latest"

@@ -19,7 +19,7 @@ guardrails:
       output_parse_pii: true
       # Reason: the default scope "both" re-masks replies right after output_parse_pii restores them.
       presidio_filter_scope: input
-      # Reason: places and dates don't identify Joe, and masking them breaks everyday questions.
+      # Reason: places and dates don't identify you, and masking them breaks everyday questions.
       presidio_entities_deny_list: {{ pii_entities_not_masked | to_json }}
       presidio_analyzer_api_base: http://127.0.0.1:5002
       presidio_anonymizer_api_base: http://127.0.0.1:5001

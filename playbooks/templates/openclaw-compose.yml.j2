@@ -12,6 +12,10 @@ services:
       OPENCLAW_GATEWAY_TOKEN: "{{ openclaw_gateway_token }}"
       LITELLM_API_KEY: "{{ litellm_master_key }}"
       HA_TOKEN: "{{ ha_openclaw_token }}"
+      TWILIO_ACCOUNT_SID: "{{ twilio_account_sid }}"
+      TWILIO_AUTH_TOKEN: "{{ twilio_auth_token }}"
+      TWILIO_FROM_NUMBER: "{{ twilio_phone_number }}"
+      PERSONAL_MOBILE_NUMBER: "{{ personal_mobile_number }}"
       TZ: "{{ timezone }}"
     volumes:
       - ./state:/home/node/.openclaw

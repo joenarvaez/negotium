@@ -53,6 +53,17 @@
   changed_when: "'Started' in openclaw_up.stderr or 'Recreated' in openclaw_up.stderr"
   tags: [openclaw]
 
+- name: Check the voice-call plugin is installed
+  command: docker exec openclaw-openclaw-1 node dist/index.js plugins list
+  register: openclaw_plugins
+  changed_when: false
+  tags: [openclaw]
+
+- name: Install the voice-call plugin (Twilio)
+  command: docker exec openclaw-openclaw-1 node dist/index.js plugins install @openclaw/voice-call
+  when: "'voice-call' not in openclaw_plugins.stdout"
+  tags: [openclaw]
+
 - name: Read the live openclaw.json
   slurp:
     src: "{{ docker_dir }}/openclaw/state/openclaw.json"
@@ -92,7 +103,14 @@
   when: "':8443' not in serve_status.stdout"
   tags: [openclaw]
 
-- name: Verify OpenClaw answers through Strata
+- name: Open the Twilio webhook to the internet
+  # Reason: Twilio must reach the voice webhook; Funnel exposes only port 10000,
+  # where the plugin (bound to localhost) checks Twilio's signature.
+  command: tailscale funnel --bg --https=10000 http://127.0.0.1:3334
+  when: "':10000' not in serve_status.stdout"
+  tags: [openclaw]
+
+- name: Verify OpenClaw answers
   uri:
     url: "http://{{ tailscale_ip }}:18789/v1/chat/completions"
     method: POST

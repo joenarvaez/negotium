@@ -75,5 +75,9 @@
   environment:
     HA_OWNER_PASSWORD: "{{ ha_owner_password }}"
   register: ha_setup
+  # Reason: right after a restart HA serves pages before its API is up.
+  until: ha_setup.rc == 0
+  retries: 10
+  delay: 6
   changed_when: (ha_setup.stdout | from_json).changed
   tags: [home_assistant]

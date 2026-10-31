@@ -29,6 +29,23 @@
       }
     }
   },
+  "plugins": {
+    "entries": {
+      "voice-call": {
+        "enabled": true,
+        "config": {
+          "provider": "twilio",
+          "fromNumber": "${TWILIO_FROM_NUMBER}",
+          "toNumber": "${PERSONAL_MOBILE_NUMBER}",
+          "twilio": { "accountSid": "${TWILIO_ACCOUNT_SID}", "authToken": "${TWILIO_AUTH_TOKEN}" },
+          "serve": { "port": 3334, "path": "/voice/webhook" },
+          "publicUrl": "https://{{ tailscale_hostname }}:10000/voice/webhook",
+          "webhookSecurity": { "allowedHosts": ["{{ tailscale_hostname }}"], "trustedProxyIPs": ["127.0.0.1"] },
+          "outbound": { "defaultMode": "conversation" }
+        }
+      }
+    }
+  },
   "agents": {
     "defaults": { "model": { "primary": "litellm/qwen" } }
   }

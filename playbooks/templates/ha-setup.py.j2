@@ -155,8 +155,10 @@ async def fallback(s, token):
 
 async def main():
     async with aiohttp.ClientSession() as s:
-        steps = await (await s.get(f"{BASE}/api/onboarding")).json()
-        done = {x["step"] for x in steps if x["done"]}
+        r = await s.get(f"{BASE}/api/onboarding")
+        # Reason: once onboarding is finished, HA stops serving this endpoint after a restart.
+        done = ({"user", "core_config", "analytics", "integration"} if r.status == 404
+                else {x["step"] for x in await r.json() if x["done"]})
         token = await get_token(s, done)
         if sys.argv[1] == "core":
             changed = await core(s, token, done)
