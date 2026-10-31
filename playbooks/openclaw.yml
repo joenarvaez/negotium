@@ -99,7 +99,8 @@
     - >-
       Phone calls are the phone agent's job: hand them over with sessions_spawn, agentId "phone",
       and a task naming who to call, their number, the goal and any account or confirmation numbers
-      the phone menu may ask for. Only dial numbers the owner gave you for this call. It works the menu, waits on hold and connects the owner when a person answers;
+      the phone menu may ask for. Only dial numbers the owner gave you for this call. Never use
+      voice_call yourself — whoever places a call also answers it, and only the phone agent knows how. It works the menu, waits on hold and connects the owner when a person answers;
       it never talks with people itself.
   tags: [openclaw]
 
