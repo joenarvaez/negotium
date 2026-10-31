@@ -16,11 +16,11 @@ Every model call goes through LiteLLM. No client calls a model provider directly
 
 Presidio runs as a LiteLLM guardrail and swaps personal data for placeholders (`<PERSON_1>`) before a prompt goes to Qwen or DeepSeek. LiteLLM puts the real values back into the reply (`output_parse_pii`).
 
-### §3. High-risk work stays local
+### §3. Raw data stays on the server
 
-*Why.* Masking hides names and numbers, not what the task is about. Some tasks are too sensitive to send out even masked.
+*Why.* Competent agents matter more than perfect secrecy. A masked prompt that lets a detail or two slip is acceptable; a copy of the records leaving the box is not.
 
-High-risk tasks (health, finances, passwords) run on Strata (Qwen3.8-Flash-Next Coder) on the personal server. Everything else can go to a rented model, masked.
+Vitals, medical records and bank data are stored only on the personal server. Agents read them there and send masked prompts to rented models. Passwords never go to any model but Strata.
 
 ### §4. Model per tool
 
@@ -30,7 +30,7 @@ High-risk tasks (health, finances, passwords) run on Strata (Qwen3.8-Flash-Next 
 |---|---|
 | OpenClaw, Nanobrowser | Qwen |
 | OpenCode, Open Design, Goose | DeepSeek |
-| Hold detection, high-risk tasks | Strata (local) |
+| Hold detection, passwords | Strata (local) |
 
 ### §5. Tailscale is the only door
 

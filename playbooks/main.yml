@@ -14,7 +14,10 @@
     docker_dir: /home/admin/docker
     litellm_version: "main-stable"
     strata_model: "qwen3.8-flash-next-coder-iq1_m"
+    qwen_model: "qwen3.8-max"
+    dashscope_base_url: "https://ws-4hta3ygc29v7zpo7.ap-southeast-1.maas.aliyuncs.com/compatible-mode/v1"
     tailscale_ip: "100.92.147.94"
+    pii_entities_not_masked: [LOCATION, DATE_TIME, NRP, URL]
     tailscale_hostname: "arketyped.tail5a2469.ts.net"
     speaches_version: "latest-cpu"
     whisper_model: "Systran/faster-distil-whisper-small.en"

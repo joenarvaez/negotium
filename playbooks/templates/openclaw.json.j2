@@ -23,12 +23,13 @@
         "apiKey": "${LITELLM_API_KEY}",
         "api": "openai-completions",
         "models": [
+          { "id": "qwen", "name": "Qwen", "input": ["text"], "contextWindow": 131072, "maxTokens": 8192 },
           { "id": "strata", "name": "Strata", "input": ["text"], "contextWindow": 32768, "maxTokens": 8192 }
         ]
       }
     }
   },
   "agents": {
-    "defaults": { "model": { "primary": "litellm/strata" } }
+    "defaults": { "model": { "primary": "litellm/qwen" } }
   }
 }

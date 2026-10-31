@@ -78,5 +78,21 @@
   register: litellm_verify
   failed_when: "'ready' not in (litellm_verify.json.choices[0].message.content | lower)"
   changed_when: false
-  loop: [strata]
+  loop: [strata, qwen]
+  tags: [litellm]
+
+- name: Verify replies come back unmasked
+  uri:
+    url: "http://{{ tailscale_ip }}:4000/v1/chat/completions"
+    method: POST
+    headers:
+      Authorization: "Bearer {{ litellm_master_key }}"
+    body_format: json
+    body:
+      model: qwen
+      messages: [{role: user, content: "My name is Dr. Lee. Repeat my name back, nothing else."}]
+    timeout: 300
+  register: litellm_unmask
+  failed_when: "'Lee' not in litellm_unmask.json.choices[0].message.content"
+  changed_when: false
   tags: [litellm]
