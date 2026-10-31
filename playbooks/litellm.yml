@@ -86,7 +86,7 @@
   register: litellm_verify
   failed_when: "'ready' not in (litellm_verify.json.choices[0].message.content | lower)"
   changed_when: false
-  loop: [strata, qwen, qwen_fast]
+  loop: [strata, qwen, qwen_fast, deepseek, deepseek_fast, gpt-4o-mini]
   tags: [litellm]
 
 - name: Verify replies come back unmasked

@@ -20,6 +20,8 @@
     qwen_model: "qwen3.8-max"
     # Phone turns must answer in seconds; the max model takes ~20s through OpenClaw.
     qwen_fast_model: "qwen3.8-flash"
+    deepseek_model: "deepseek-v4-pro"
+    deepseek_fast_model: "deepseek-flash"
     dashscope_base_url: "https://ws-4hta3ygc29v7zpo7.ap-southeast-1.maas.aliyuncs.com/compatible-mode/v1"
     tailscale_ip: "100.92.147.94"
     # US_DRIVER_LICENSE: matches phone digits, and the overlapping tags garble restored numbers.

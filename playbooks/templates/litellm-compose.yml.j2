@@ -7,6 +7,7 @@ services:
     environment:
       STRATA_API_KEY: "{{ strata_api_key }}"
       DASHSCOPE_API_KEY: "{{ dashscope_api_key }}"
+      DEEPSEEK_API_KEY: "{{ deepseek_api_key }}"
       LITELLM_MASTER_KEY: "{{ litellm_master_key }}"
     volumes:
       - ./config.yaml:/app/config.yaml:ro
