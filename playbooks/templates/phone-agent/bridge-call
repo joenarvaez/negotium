@@ -1,0 +1,15 @@
+#!/bin/sh
+# Hands the live Twilio call to the owner's mobile: tells the other party to hold on, then dials.
+# `bridge-call check` only confirms the credentials are present.
+set -eu
+: "${TWILIO_ACCOUNT_SID:?}" "${TWILIO_AUTH_TOKEN:?}" "${TWILIO_FROM_NUMBER:?}" "${PERSONAL_MOBILE_NUMBER:?}"
+[ "${1:-}" = check ] && { echo "ready"; exit 0; }
+api="https://api.twilio.com/2010-04-01/Accounts/$TWILIO_ACCOUNT_SID"
+sid=$(curl -fsS -G -u "$TWILIO_ACCOUNT_SID:$TWILIO_AUTH_TOKEN" "$api/Calls.json" \
+  --data-urlencode "Status=in-progress" --data-urlencode "From=$TWILIO_FROM_NUMBER" \
+  | grep -o '"sid": "CA[0-9a-f]*"' | head -1 | cut -d'"' -f4)
+[ -n "$sid" ] || { echo "no live call to bridge" >&2; exit 1; }
+curl -fsS -u "$TWILIO_ACCOUNT_SID:$TWILIO_AUTH_TOKEN" "$api/Calls/$sid.json" \
+  --data-urlencode "Twiml=<Response><Say>One moment please, I'm connecting you now.</Say><Dial callerId=\"$TWILIO_FROM_NUMBER\"><Number>$PERSONAL_MOBILE_NUMBER</Number></Dial></Response>" \
+  >/dev/null
+echo "bridged"

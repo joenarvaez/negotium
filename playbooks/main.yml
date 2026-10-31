@@ -22,7 +22,8 @@
     qwen_fast_model: "qwen3.8-flash"
     dashscope_base_url: "https://ws-4hta3ygc29v7zpo7.ap-southeast-1.maas.aliyuncs.com/compatible-mode/v1"
     tailscale_ip: "100.92.147.94"
-    pii_entities_not_masked: [LOCATION, DATE_TIME, NRP, URL]
+    # US_DRIVER_LICENSE: matches phone digits, and the overlapping tags garble restored numbers.
+    pii_entities_not_masked: [LOCATION, DATE_TIME, NRP, URL, US_DRIVER_LICENSE]
     # Reason: without this, models refuse to act on <PHONE_NUMBER_1> thinking the value is hidden.
     masked_values_note: >-
       Tags like <PERSON_1> or <PHONE_NUMBER_1> are real values, masked for privacy on the way to you

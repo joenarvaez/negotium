@@ -56,6 +56,10 @@
 - name: Check the voice-call plugin is installed
   command: docker exec openclaw-openclaw-1 node dist/index.js plugins list
   register: openclaw_plugins
+  # Reason: right after a (re)start OpenClaw runs state maintenance and refuses CLI reads.
+  until: openclaw_plugins.rc == 0
+  retries: 20
+  delay: 3
   changed_when: false
   tags: [openclaw]
 
@@ -64,14 +68,26 @@
   when: "'voice-call' not in openclaw_plugins.stdout"
   tags: [openclaw]
 
-- name: Copy the bridge-call skill
-  # Hands a held call to the owner's mobile once a person picks up.
-  copy:
-    src: templates/skills/bridge-call/
-    dest: "{{ docker_dir }}/openclaw/state/workspace/skills/bridge-call/"
+- name: Create the phone agent's workspace
+  file:
+    path: "{{ docker_dir }}/openclaw/state/workspace-phone"
+    state: directory
     owner: "1000"
     group: "1000"
     mode: "0755"
+  tags: [openclaw]
+
+- name: Copy the phone agent's instructions and bridge script
+  # A lean agent for live calls: short prompt, fast model, two tools — so turns take seconds.
+  copy:
+    src: "templates/phone-agent/{{ item.name }}"
+    dest: "{{ docker_dir }}/openclaw/state/workspace-phone/{{ item.name }}"
+    owner: "1000"
+    group: "1000"
+    mode: "{{ item.mode }}"
+  loop:
+    - {name: AGENTS.md, mode: "0644"}
+    - {name: bridge-call, mode: "0755"}
   tags: [openclaw]
 
 - name: Tell the agent masked tags are real values
@@ -119,6 +135,17 @@
   when: "':8443' not in serve_status.stdout"
   tags: [openclaw]
 
+- name: Let the phone agent run only the bridge script
+  # Reason: callers can say anything; exec stays limited to this one command.
+  command: docker exec openclaw-openclaw-1 node dist/index.js approvals allowlist add --agent phone /home/node/.openclaw/workspace-phone/bridge-call
+  register: phone_allowlist
+  # Reason: right after a restart OpenClaw runs state maintenance and refuses CLI writes.
+  until: phone_allowlist.rc == 0
+  retries: 20
+  delay: 3
+  changed_when: false
+  tags: [openclaw]
+
 - name: Open the Twilio webhook to the internet
   # Reason: Twilio must reach the voice webhook; Funnel exposes only port 10000,
   # where the plugin (bound to localhost) checks Twilio's signature.
@@ -134,7 +161,7 @@
       Authorization: "Bearer {{ openclaw_gateway_token }}"
     body_format: json
     body:
-      model: openclaw/default
+      model: openclaw/main
       messages: [{role: user, content: "Reply with the single word: ready"}]
     timeout: 300
   register: openclaw_verify
@@ -153,7 +180,7 @@
       Authorization: "Bearer {{ openclaw_gateway_token }}"
     body_format: json
     body:
-      model: openclaw/default
+      model: openclaw/main
       messages: [{role: user, content: "Reply with the single word: ready"}]
     timeout: 300
   register: openclaw_https_verify
@@ -179,15 +206,15 @@
     body_format: json
     body:
       text: "Reply with the single word: ready"
-      agent_id: conversation.openclaw_default
+      agent_id: conversation.openclaw_main
     timeout: 300
   register: ha_openclaw_verify
   failed_when: "'ready' not in (ha_openclaw_verify.json.response.speech.plain.speech | lower)"
   changed_when: false
   tags: [openclaw]
 
-- name: Verify the bridge-call skill sees its Twilio credentials
-  command: docker exec openclaw-openclaw-1 sh /home/node/.openclaw/workspace/skills/bridge-call/bridge.sh check
+- name: Verify the bridge script sees its Twilio credentials
+  command: docker exec openclaw-openclaw-1 /home/node/.openclaw/workspace-phone/bridge-call check
   register: bridge_check
   failed_when: bridge_check.stdout != "ready"
   changed_when: false

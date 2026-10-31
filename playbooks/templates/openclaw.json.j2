@@ -43,7 +43,8 @@
           "publicUrl": "https://{{ tailscale_hostname }}:10000/voice/webhook",
           "webhookSecurity": { "allowedHosts": ["{{ tailscale_hostname }}"], "trustedProxyIPs": ["127.0.0.1"] },
           "outbound": { "defaultMode": "conversation" },
-          "responseModel": "litellm/qwen_fast",
+          "agentId": "phone",
+          "sessionScope": "per-call",
           "responseTimeoutMs": 60000,
           "maxDurationSeconds": 7200,
           "staleCallReaperSeconds": 7200,
@@ -53,6 +54,15 @@
     }
   },
   "agents": {
-    "defaults": { "model": { "primary": "litellm/qwen" } }
+    "defaults": { "model": { "primary": "litellm/qwen" } },
+    "entries": {
+      "phone": {
+        "name": "Phone",
+        "workspace": "/home/node/.openclaw/workspace-phone",
+        "model": "litellm/qwen_fast",
+        "skills": [],
+        "tools": { "allow": ["voice_call", "exec"], "exec": { "mode": "allowlist" } }
+      }
+    }
   }
 }

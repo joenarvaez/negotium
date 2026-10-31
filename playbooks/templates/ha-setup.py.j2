@@ -14,6 +14,7 @@ CLIENT_ID = BASE + "/"
 USER = "{{ ha_owner_username }}"
 PASSWORD = os.environ["HA_OWNER_PASSWORD"]
 OPENCLAW_TOKEN_FILE = "/config/.openclaw_token"
+OPENCLAW_MODEL = "openclaw/main"
 
 
 async def get_token(s, done):
@@ -126,18 +127,24 @@ async def fallback(s, token):
     # Reason: HA's LiteLLM integration is a plain OpenAI-compatible client; OpenClaw speaks that API.
     entry_id, changed = await add_entry(s, auth, "litellm", {
         "url": "http://127.0.0.1:18789", "api_key": os.environ["OPENCLAW_GATEWAY_TOKEN"]})
-    entries = await (await s.get(f"{BASE}/api/config/config_entries/entry", headers=auth)).json()
-    if next(e for e in entries if e["entry_id"] == entry_id)["num_subentries"] == 0:
+    ws = await open_ws(s, token)
+    # Reason: with more than one OpenClaw agent, the model must name one; replace stale agents.
+    # A subentry's title is its model.
+    subentries = await ws_call(ws, 290, {"type": "config_entries/subentries/list", "entry_id": entry_id})
+    for n, sub in enumerate(x for x in subentries if x["title"] != OPENCLAW_MODEL):
+        await ws_call(ws, 291 + n, {"type": "config_entries/subentries/delete",
+                                    "entry_id": entry_id, "subentry_id": sub["subentry_id"]})
+        changed = True
+    if not any(x["title"] == OPENCLAW_MODEL for x in subentries):
         r = await s.post(f"{BASE}/api/config/config_entries/subentries/flow",
                          json={"handler": [entry_id, "conversation"]}, headers=auth)
         flow_id = (await r.json())["flow_id"]
         # Reason: no HA tools here; OpenClaw controls the house through HA's MCP server.
         r = await s.post(f"{BASE}/api/config/config_entries/subentries/flow/{flow_id}",
-                         json={"model": "openclaw/default", "llm_hass_api": []}, headers=auth)
+                         json={"model": OPENCLAW_MODEL, "llm_hass_api": []}, headers=auth)
         result = await r.json()
         assert result.get("type") == "create_entry", result
         changed = True
-    ws = await open_ws(s, token)
     for n in range(30):
         ents = await ws_call(ws, 300 + n, {"type": "config/entity_registry/list"})
         agent = next((e["entity_id"] for e in ents
