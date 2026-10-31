@@ -17,6 +17,14 @@
   register: litellm_config
   tags: [litellm]
 
+- name: Copy the patched Presidio guardrail
+  copy:
+    src: templates/litellm-presidio.py
+    dest: "{{ docker_dir }}/litellm/presidio.py"
+    mode: "0644"
+  register: litellm_presidio
+  tags: [litellm]
+
 - name: Copy LiteLLM docker-compose.yml
   template:
     src: litellm-compose.yml.j2
@@ -37,7 +45,7 @@
   command: docker compose restart
   args:
     chdir: "{{ docker_dir }}/litellm"
-  when: litellm_config.changed and 'Started' not in litellm_up.stderr
+  when: (litellm_config.changed or litellm_presidio.changed) and 'Started' not in litellm_up.stderr
   tags: [litellm]
 
 - name: Wait for LiteLLM to be ready
@@ -94,5 +102,28 @@
     timeout: 300
   register: litellm_unmask
   failed_when: "'Lee' not in litellm_unmask.json.choices[0].message.content"
+  changed_when: false
+  tags: [litellm]
+
+- name: Verify tool calls come back unmasked
+  # Reason: OpenClaw dials and pays through tool calls; a masked number can't be dialed.
+  uri:
+    url: "http://{{ tailscale_ip }}:4000/v1/chat/completions"
+    method: POST
+    headers:
+      Authorization: "Bearer {{ litellm_master_key }}"
+    body_format: json
+    body:
+      model: qwen
+      messages: [{role: user, content: "Call me at 415-555-0134."}]
+      tools:
+        - type: function
+          function:
+            name: dial
+            parameters: {type: object, properties: {number: {type: string}}, required: [number]}
+      tool_choice: {type: function, function: {name: dial}}
+    timeout: 300
+  register: litellm_tool_unmask
+  failed_when: "'555-0134' not in litellm_tool_unmask.json.choices[0].message.tool_calls[0].function.arguments"
   changed_when: false
   tags: [litellm]

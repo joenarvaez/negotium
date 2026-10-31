@@ -10,4 +10,6 @@ services:
       LITELLM_MASTER_KEY: "{{ litellm_master_key }}"
     volumes:
       - ./config.yaml:/app/config.yaml:ro
+      # PR #32014: phone numbers and names in tool calls come back unmasked.
+      - ./presidio.py:/app/.venv/lib/python3.13/site-packages/litellm/proxy/guardrails/guardrail_hooks/presidio.py:ro
     command: ["--config", "/app/config.yaml", "--host", "{{ tailscale_ip }}", "--port", "4000"]

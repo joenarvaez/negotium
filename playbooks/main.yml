@@ -13,7 +13,9 @@
   vars:
     presidio_version: "latest"
     docker_dir: /home/admin/docker
-    litellm_version: "main-stable"
+    # Reason: pinned because templates/litellm-presidio.py is this version's file plus
+    # BerriAI/litellm PR #32014 (unmask tool-call arguments). Drop both once it merges.
+    litellm_version: "v1.106.6"
     strata_model: "qwen3.8-flash-next-coder-iq1_m"
     qwen_model: "qwen3.8-max"
     dashscope_base_url: "https://ws-4hta3ygc29v7zpo7.ap-southeast-1.maas.aliyuncs.com/compatible-mode/v1"
