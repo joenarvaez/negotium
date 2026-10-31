@@ -50,14 +50,15 @@
   tags: [vitals]
 
 - name: Serve the vitals receiver over HTTPS on the tailnet
-  # Reason: Serve only offers 443, 8443 and 10000; Caddy has 443, OpenClaw 8443.
-  command: tailscale serve --bg --https=10000 http://127.0.0.1:8095
-  when: "':10000' not in vitals_serve_status.stdout"
+  # Reason: Serve only offers 443, 8443 and 10000; Caddy has 443 and Twilio's funnel
+  # 10000, so vitals shares 8443 with OpenClaw under /vitals.
+  command: tailscale serve --bg --https=8443 --set-path /vitals http://127.0.0.1:8095/vitals
+  when: "'/vitals' not in vitals_serve_status.stdout"
   tags: [vitals]
 
 - name: Verify the receiver turns away a missing key
   uri:
-    url: "https://{{ tailscale_hostname }}:10000/vitals?dry_run"
+    url: "https://{{ tailscale_hostname }}:8443/vitals?dry_run"
     method: POST
     body_format: json
     body: {}
@@ -70,7 +71,7 @@
 
 - name: Verify the receiver accepts a keyed sync
   uri:
-    url: "https://{{ tailscale_hostname }}:10000/vitals?dry_run"
+    url: "https://{{ tailscale_hostname }}:8443/vitals?dry_run"
     method: POST
     headers:
       x-api-key: "{{ vitals_webhook_key }}"
