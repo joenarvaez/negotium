@@ -64,6 +64,16 @@
   when: "'voice-call' not in openclaw_plugins.stdout"
   tags: [openclaw]
 
+- name: Copy the bridge-call skill
+  # Hands a held call to the owner's mobile once a person picks up.
+  copy:
+    src: templates/skills/bridge-call/
+    dest: "{{ docker_dir }}/openclaw/state/workspace/skills/bridge-call/"
+    owner: "1000"
+    group: "1000"
+    mode: "0755"
+  tags: [openclaw]
+
 - name: Read the live openclaw.json
   slurp:
     src: "{{ docker_dir }}/openclaw/state/openclaw.json"
@@ -167,5 +177,12 @@
     timeout: 300
   register: ha_openclaw_verify
   failed_when: "'ready' not in (ha_openclaw_verify.json.response.speech.plain.speech | lower)"
+  changed_when: false
+  tags: [openclaw]
+
+- name: Verify the bridge-call skill sees its Twilio credentials
+  command: docker exec openclaw-openclaw-1 sh /home/node/.openclaw/workspace/skills/bridge-call/bridge.sh check
+  register: bridge_check
+  failed_when: bridge_check.stdout != "ready"
   changed_when: false
   tags: [openclaw]
