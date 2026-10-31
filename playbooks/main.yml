@@ -6,6 +6,7 @@
 #   4. speech   — Whisper + Kokoro
 #   5. home assistant (needs 3, 4)
 #   6. openclaw (needs 3, Twilio, privacy.com)
+#   7. vitals   — Health Connect webhook for the health coach
 
 - name: negotium
   hosts: all
@@ -29,6 +30,7 @@
     wyoming_openai_version: "latest"
     timezone: "America/Chicago"
     openclaw_version: "latest"
+    vitals_python_version: "3.13-slim"
   vars_files:
     - secrets.yml
 
@@ -53,3 +55,7 @@
     - name: Step 6 — OpenClaw
       include_tasks: openclaw.yml
       tags: [openclaw]
+
+    - name: Step 7 — Vitals webhook
+      include_tasks: vitals.yml
+      tags: [vitals]

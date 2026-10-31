@@ -1,0 +1,14 @@
+services:
+  vitals:
+    image: python:{{ vitals_python_version }}
+    restart: unless-stopped
+    # Reason: uid 1000 matches OpenClaw's node user, which reads the data.
+    user: "1000:1000"
+    ports:
+      - "127.0.0.1:8095:8095"
+    environment:
+      VITALS_WEBHOOK_KEY: "{{ vitals_webhook_key }}"
+    volumes:
+      - ./server.py:/app/server.py:ro
+      - ./data:/data
+    command: ["python", "/app/server.py"]

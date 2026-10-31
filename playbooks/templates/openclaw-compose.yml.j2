@@ -15,4 +15,6 @@ services:
       TZ: "{{ timezone }}"
     volumes:
       - ./state:/home/node/.openclaw
+      # The health coach reads vitals here; the vitals receiver (step 7) owns them.
+      - {{ docker_dir }}/vitals/data:/home/node/.openclaw/workspace/health/vitals:ro
     command: ["node", "dist/index.js", "gateway", "--port", "18789"]

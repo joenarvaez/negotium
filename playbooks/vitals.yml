@@ -1,0 +1,80 @@
+# Step 7 — vitals webhook for the health coach.
+# The HC Webhook app posts Health Connect data (Withings cuff, Pixel Watch, scale)
+# over Tailscale. Raw data stays on the server (system_adr.md §3); OpenClaw reads
+# it read-only from its workspace.
+
+- name: Create vitals data directory
+  file:
+    path: "{{ docker_dir }}/vitals/data"
+    state: directory
+    owner: "1000"
+    group: "1000"
+    mode: "0700"
+  tags: [vitals]
+
+- name: Copy the vitals receiver
+  copy:
+    src: templates/vitals-server.py
+    dest: "{{ docker_dir }}/vitals/server.py"
+    mode: "0644"
+  register: vitals_server
+  tags: [vitals]
+
+- name: Copy vitals docker-compose.yml
+  template:
+    src: vitals-compose.yml.j2
+    dest: "{{ docker_dir }}/vitals/docker-compose.yml"
+    mode: "0600"
+  tags: [vitals]
+
+- name: Start the vitals receiver
+  command: docker compose up -d
+  args:
+    chdir: "{{ docker_dir }}/vitals"
+  register: vitals_up
+  changed_when: "'Started' in vitals_up.stderr or 'Recreated' in vitals_up.stderr"
+  tags: [vitals]
+
+- name: Restart the vitals receiver on code change
+  # Reason: server.py is a mount, so compose doesn't see it change.
+  command: docker compose restart
+  args:
+    chdir: "{{ docker_dir }}/vitals"
+  when: vitals_server.changed and 'Started' not in vitals_up.stderr
+  tags: [vitals]
+
+- name: Check Tailscale Serve for the vitals receiver
+  command: tailscale serve status --json
+  register: vitals_serve_status
+  changed_when: false
+  tags: [vitals]
+
+- name: Serve the vitals receiver over HTTPS on the tailnet
+  # Reason: Serve only offers 443, 8443 and 10000; Caddy has 443, OpenClaw 8443.
+  command: tailscale serve --bg --https=10000 http://127.0.0.1:8095
+  when: "':10000' not in vitals_serve_status.stdout"
+  tags: [vitals]
+
+- name: Verify the receiver turns away a missing key
+  uri:
+    url: "https://{{ tailscale_hostname }}:10000/vitals?dry_run"
+    method: POST
+    body_format: json
+    body: {}
+    status_code: 401
+  register: result
+  until: result.status == 401
+  retries: 15
+  delay: 2
+  tags: [vitals]
+
+- name: Verify the receiver accepts a keyed sync
+  uri:
+    url: "https://{{ tailscale_hostname }}:10000/vitals?dry_run"
+    method: POST
+    headers:
+      x-api-key: "{{ vitals_webhook_key }}"
+    body_format: json
+    body: {timestamp: "2026-01-01T00:00:00Z", blood_pressure: []}
+    status_code: 204
+  tags: [vitals]
