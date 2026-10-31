@@ -74,6 +74,12 @@
     mode: "0755"
   tags: [openclaw]
 
+- name: Tell the agent masked tags are real values
+  lineinfile:
+    path: "{{ docker_dir }}/openclaw/state/workspace/AGENTS.md"
+    line: "{{ masked_values_note }}"
+  tags: [openclaw]
+
 - name: Read the live openclaw.json
   slurp:
     src: "{{ docker_dir }}/openclaw/state/openclaw.json"

@@ -24,6 +24,7 @@
         "api": "openai-completions",
         "models": [
           { "id": "qwen", "name": "Qwen", "input": ["text"], "contextWindow": 131072, "maxTokens": 8192 },
+          { "id": "qwen_fast", "name": "Qwen Fast", "input": ["text"], "contextWindow": 131072, "maxTokens": 8192 },
           { "id": "strata", "name": "Strata", "input": ["text"], "contextWindow": 32768, "maxTokens": 8192 }
         ]
       }
@@ -41,7 +42,12 @@
           "serve": { "port": 3334, "path": "/voice/webhook" },
           "publicUrl": "https://{{ tailscale_hostname }}:10000/voice/webhook",
           "webhookSecurity": { "allowedHosts": ["{{ tailscale_hostname }}"], "trustedProxyIPs": ["127.0.0.1"] },
-          "outbound": { "defaultMode": "conversation" }
+          "outbound": { "defaultMode": "conversation" },
+          "responseModel": "litellm/qwen_fast",
+          "responseTimeoutMs": 60000,
+          "maxDurationSeconds": 7200,
+          "staleCallReaperSeconds": 7200,
+          "transcriptTimeoutMs": 3600000
         }
       }
     }

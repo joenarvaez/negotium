@@ -86,7 +86,7 @@
   register: litellm_verify
   failed_when: "'ready' not in (litellm_verify.json.choices[0].message.content | lower)"
   changed_when: false
-  loop: [strata, qwen]
+  loop: [strata, qwen, qwen_fast]
   tags: [litellm]
 
 - name: Verify replies come back unmasked
@@ -115,7 +115,9 @@
     body_format: json
     body:
       model: qwen
-      messages: [{role: user, content: "Call me at 415-555-0134."}]
+      messages:
+        - {role: system, content: "{{ masked_values_note }}"}
+        - {role: user, content: "Call me at 415-555-0134."}
       tools:
         - type: function
           function:

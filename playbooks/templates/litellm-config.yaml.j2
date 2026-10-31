@@ -1,4 +1,9 @@
 model_list:
+  - model_name: qwen_fast
+    litellm_params:
+      model: openai/{{ qwen_fast_model }}
+      api_base: {{ dashscope_base_url }}
+      api_key: os.environ/DASHSCOPE_API_KEY
   - model_name: qwen
     litellm_params:
       model: openai/{{ qwen_model }}
