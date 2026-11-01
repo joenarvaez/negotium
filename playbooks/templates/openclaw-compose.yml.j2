@@ -20,6 +20,9 @@ services:
       PERSONAL_MOBILE_NUMBER: "{{ personal_mobile_number }}"
       DEEPGRAM_API_KEY: "{{ deepgram_api_key }}"
       PRIVACY_API_KEY: "{{ privacy_api_key }}"
+      AWS_ACCESS_KEY_ID: "{{ aws_access_key_id }}"
+      AWS_SECRET_ACCESS_KEY: "{{ aws_secret_access_key }}"
+      AWS_DEFAULT_REGION: "{{ aws_region }}"
       TZ: "{{ timezone }}"
     volumes:
       - ./state:/home/node/.openclaw

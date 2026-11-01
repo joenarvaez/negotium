@@ -41,6 +41,7 @@
     timezone: "America/Chicago"
     # The -browser image ships Chromium, so the agent can browse and log into accounts (system_adr.md §6).
     openclaw_version: "latest-browser"
+    aws_region: "us-east-1"
     vitals_python_version: "3.13-slim"
   vars_files:
     - secrets.yml

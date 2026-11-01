@@ -109,6 +109,49 @@
     mode: "0644"
   tags: [openclaw]
 
+- name: Create OpenClaw's tools directory
+  file:
+    path: "{{ docker_dir }}/openclaw/state/tools"
+    state: directory
+    owner: "1000"
+    group: "1000"
+    mode: "0755"
+  tags: [openclaw]
+
+- name: Copy the aws skill
+  copy:
+    src: templates/skills/aws/
+    dest: "{{ docker_dir }}/openclaw/state/workspace/skills/aws/"
+    owner: "1000"
+    group: "1000"
+    mode: "0644"
+  tags: [openclaw]
+
+- name: Check the AWS CLI is installed for OpenClaw
+  command: docker exec openclaw-openclaw-1 /home/node/.openclaw/tools/bin/aws --version
+  register: aws_cli
+  failed_when: false
+  changed_when: false
+  tags: [openclaw]
+
+- name: Unpack the AWS CLI installer into OpenClaw's state
+  # Reason: the image has no AWS CLI; installing under ~/.openclaw survives restarts and image updates.
+  unarchive:
+    src: https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip
+    dest: "{{ docker_dir }}/openclaw/state/tools"
+    remote_src: yes
+    owner: "1000"
+    group: "1000"
+  when: aws_cli.rc != 0
+  tags: [openclaw]
+
+- name: Install the AWS CLI for OpenClaw
+  command: >
+    docker exec openclaw-openclaw-1 /home/node/.openclaw/tools/aws/install
+    -i /home/node/.openclaw/tools/aws-cli -b /home/node/.openclaw/tools/bin
+  when: aws_cli.rc != 0
+  tags: [openclaw]
+
 - name: Tell the main agent how to work
   lineinfile:
     path: "{{ docker_dir }}/openclaw/state/workspace/AGENTS.md"
@@ -259,5 +302,12 @@
   command: docker exec openclaw-openclaw-1 node dist/index.js browser open https://example.com
   register: browser_check
   failed_when: "'opened:' not in browser_check.stdout"
+  changed_when: false
+  tags: [openclaw]
+
+- name: Verify OpenClaw can reach AWS
+  command: docker exec openclaw-openclaw-1 /home/node/.openclaw/tools/bin/aws sts get-caller-identity --query Arn --output text
+  register: aws_check
+  failed_when: "'arn:aws:' not in aws_check.stdout"
   changed_when: false
   tags: [openclaw]
