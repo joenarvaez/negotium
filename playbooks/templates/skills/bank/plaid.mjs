@@ -5,6 +5,7 @@ import { appendFileSync, existsSync, mkdirSync, readFileSync, writeFileSync } fr
 const DIR = "/home/node/.openclaw/workspace/finance";
 const ITEMS = `${DIR}/.items.json`;
 const PENDING = `${DIR}/.pending-link`;
+const USER = `${DIR}/.user.json`;
 const { PLAID_CLIENT_ID, PLAID_SECRET, PLAID_ENV } = process.env;
 const [cmd] = process.argv.slice(2);
 
@@ -23,6 +24,13 @@ const linkRequest = extra => ({
   client_name: "negotium", language: "en", country_codes: ["US"],
   user: { client_user_id: "owner" }, products: ["transactions"], ...extra,
 });
+// Reason: linking several banks in one session (Multi-Item Link) needs a Plaid user, made once.
+async function plaidUser() {
+  if (existsSync(USER)) return JSON.parse(readFileSync(USER, "utf8")).user_id;
+  const { user_id } = await plaid("/user/create", { client_user_id: "negotium-owner" });
+  writeFileSync(USER, JSON.stringify({ user_id }), { mode: 0o600 });
+  return user_id;
+}
 const items = () => (existsSync(ITEMS) ? JSON.parse(readFileSync(ITEMS, "utf8")) : []);
 mkdirSync(DIR, { recursive: true });
 
@@ -30,9 +38,11 @@ if (cmd === "check") {
   await plaid("/link/token/create", linkRequest({}));
   console.log("ready");
 } else if (cmd === "link") {
-  const { link_token, hosted_link_url } = await plaid("/link/token/create", linkRequest({ hosted_link: {} }));
+  const { link_token, hosted_link_url } = await plaid("/link/token/create", linkRequest({
+    hosted_link: {}, enable_multi_item_link: true, user_id: await plaidUser(),
+  }));
   writeFileSync(PENDING, link_token);
-  console.log(`Open this and log into the bank: ${hosted_link_url}`);
+  console.log(`Open this within 4 hours and add every bank, one after another: ${hosted_link_url}`);
 } else if (cmd === "finish") {
   const { link_sessions = [] } = await plaid("/link/token/get", { link_token: readFileSync(PENDING, "utf8") });
   const added = link_sessions.flatMap(s => s.results?.item_add_results ?? []);
