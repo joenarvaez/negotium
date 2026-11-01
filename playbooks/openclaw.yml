@@ -187,10 +187,20 @@
     - >-
       Phone calls are the phone agent's job: hand them over with sessions_spawn, agentId "phone",
       and a task naming who to call, their number, the goal and any account or confirmation numbers
-      the phone menu may ask for, or the message to deliver and its language. Only dial numbers the
-      owner gave you for this call. Never use
+      the phone menu may ask for, or the message to deliver and its language. Give only numbers the
+      owner gave you or that you found on the company's official website — never make one up. Never use
       voice_call yourself — whoever places a call also answers it, and only the phone agent knows how. It works the menu, waits on hold and connects the owner when a person answers;
       it never talks with people itself.
+  tags: [openclaw]
+
+- name: Refuse fictional 555 numbers in the voice-call plugin
+  # Reason: an agent once invented a "+1 555" airline number; a plausible fake would ring a stranger.
+  # Re-applied every run because plugin updates overwrite the file.
+  replace:
+    path: "{{ docker_dir }}/openclaw/state/extensions/voice-call/dist/index.js"
+    regexp: '^(\t+)const to = requireInput\(params\.to \?\? rt\.config\.toNumber, missingToMessage\);$'
+    replace: '\1const to = requireInput(params.to ?? rt.config.toNumber, missingToMessage); if (/^1?\\d{3}555\\d{4}$/.test(String(to).replace(/\\D/g, ""))) throw new VoiceCallCommandInputError("refusing to dial a fictional 555 number: use a number the owner gave or the company''s official one");'
+  register: vc_guard
   tags: [openclaw]
 
 - name: Read the live openclaw.json
@@ -231,7 +241,7 @@
   command: docker compose restart
   args:
     chdir: "{{ docker_dir }}/openclaw"
-  when: (openclaw_config.changed or openclaw_patch.changed) and 'Started' not in openclaw_up.stderr
+  when: (openclaw_config.changed or openclaw_patch.changed or vc_guard.changed) and 'Started' not in openclaw_up.stderr
   tags: [openclaw]
 
 - name: Check Tailscale Serve for OpenClaw
