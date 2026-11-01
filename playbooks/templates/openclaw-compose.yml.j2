@@ -17,6 +17,7 @@ services:
       TWILIO_FROM_NUMBER: "{{ twilio_phone_number }}"
       PERSONAL_MOBILE_NUMBER: "{{ personal_mobile_number }}"
       DEEPGRAM_API_KEY: "{{ deepgram_api_key }}"
+      PRIVACY_API_KEY: "{{ privacy_api_key }}"
       TZ: "{{ timezone }}"
     volumes:
       - ./state:/home/node/.openclaw

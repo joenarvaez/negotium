@@ -53,6 +53,16 @@
   changed_when: "'Started' in openclaw_up.stderr or 'Recreated' in openclaw_up.stderr"
   tags: [openclaw]
 
+- name: Wait for OpenClaw's CLI after a (re)start
+  # Reason: right after a start OpenClaw runs state maintenance and refuses CLI calls for minutes.
+  command: docker exec openclaw-openclaw-1 node dist/index.js config get gateway.port
+  register: openclaw_ready
+  until: openclaw_ready.rc == 0
+  retries: 60
+  delay: 5
+  changed_when: false
+  tags: [openclaw]
+
 - name: Check the voice-call plugin is installed
   command: docker exec openclaw-openclaw-1 node dist/index.js plugins list
   register: openclaw_plugins
@@ -88,6 +98,15 @@
   loop:
     - {name: AGENTS.md, mode: "0644"}
     - {name: bridge-call, mode: "0755"}
+  tags: [openclaw]
+
+- name: Copy the virtual-card skill (privacy.com)
+  copy:
+    src: templates/skills/virtual-card/
+    dest: "{{ docker_dir }}/openclaw/state/workspace/skills/virtual-card/"
+    owner: "1000"
+    group: "1000"
+    mode: "0644"
   tags: [openclaw]
 
 - name: Tell the main agent how to work
@@ -226,5 +245,12 @@
   command: docker exec openclaw-openclaw-1 /home/node/.openclaw/workspace-phone/bridge-call check
   register: bridge_check
   failed_when: bridge_check.stdout != "ready"
+  changed_when: false
+  tags: [openclaw]
+
+- name: Verify the virtual-card skill reaches privacy.com
+  command: docker exec openclaw-openclaw-1 node /home/node/.openclaw/workspace/skills/virtual-card/privacy-card.mjs check
+  register: privacy_check
+  failed_when: privacy_check.stdout != "ready"
   changed_when: false
   tags: [openclaw]
