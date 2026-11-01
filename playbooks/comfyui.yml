@@ -1,0 +1,50 @@
+# Step 8 — ComfyUI for image generation, on its own GPU.
+# Reachable over Tailscale at http://<tailscale ip>:8188.
+
+- name: Create ComfyUI directory
+  file:
+    path: "{{ docker_dir }}/comfyui/storage"
+    state: directory
+    mode: "0755"
+  tags: [comfyui]
+
+- name: Copy ComfyUI docker-compose.yml
+  template:
+    src: comfyui-compose.yml.j2
+    dest: "{{ docker_dir }}/comfyui/docker-compose.yml"
+    mode: "0644"
+  tags: [comfyui]
+
+- name: Start ComfyUI
+  command: docker compose up -d
+  args:
+    chdir: "{{ docker_dir }}/comfyui"
+  register: comfyui_up
+  changed_when: "'Started' in comfyui_up.stderr or 'Recreated' in comfyui_up.stderr"
+  tags: [comfyui]
+
+- name: Wait for ComfyUI to be ready
+  # Reason: the first start installs ComfyUI into storage, which takes a few minutes.
+  uri:
+    url: http://127.0.0.1:8188/system_stats
+  register: comfyui_stats
+  until: comfyui_stats.status == 200
+  retries: 120
+  delay: 5
+  tags: [comfyui]
+
+- name: Download the image model
+  get_url:
+    url: "{{ comfyui_model_url }}"
+    dest: "{{ docker_dir }}/comfyui/storage/ComfyUI/models/checkpoints/{{ comfyui_model_url | basename }}"
+    mode: "0644"
+    timeout: 3600
+  tags: [comfyui]
+
+- name: Verify ComfyUI sees its GPU
+  uri:
+    url: http://127.0.0.1:8188/system_stats
+  register: comfyui_gpu_check
+  failed_when: "(comfyui_gpu_check.json.devices | selectattr('type', 'equalto', 'cuda') | list | length) == 0"
+  changed_when: false
+  tags: [comfyui]

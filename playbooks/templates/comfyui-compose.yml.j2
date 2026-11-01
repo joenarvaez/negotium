@@ -1,0 +1,12 @@
+services:
+  comfyui:
+    image: yanwk/comfyui-boot:{{ comfyui_version }}
+    restart: unless-stopped
+    # Reason: GPU 0 holds the local model in Ollama; ComfyUI gets GPU 1 to itself.
+    devices:
+      - nvidia.com/gpu={{ comfyui_gpu }}
+    ports:
+      - "127.0.0.1:8188:8188"
+      - "{{ tailscale_ip }}:8188:8188"
+    volumes:
+      - ./storage:/root

@@ -7,6 +7,7 @@
 #   5. home assistant (needs 3, 4)
 #   6. openclaw (needs 3, Twilio, privacy.com)
 #   7. vitals   — Health Connect webhook for the health coach
+#   8. comfyui  — image generation on GPU 1
 
 - name: negotium
   hosts: all
@@ -46,6 +47,10 @@
     openclaw_version: "latest-browser"
     aws_region: "us-east-1"
     vitals_python_version: "3.13-slim"
+    comfyui_version: "cu128-slim"
+    comfyui_gpu: "1"
+    # FLUX.1 schnell (Apache 2.0), fp8 single-file checkpoint with its text encoders and VAE.
+    comfyui_model_url: "https://huggingface.co/Comfy-Org/flux1-schnell/resolve/main/flux1-schnell-fp8.safetensors"
   vars_files:
     - secrets.yml
 
@@ -74,3 +79,7 @@
     - name: Step 7 — Vitals webhook
       include_tasks: vitals.yml
       tags: [vitals]
+
+    - name: Step 8 — ComfyUI
+      include_tasks: comfyui.yml
+      tags: [comfyui]
