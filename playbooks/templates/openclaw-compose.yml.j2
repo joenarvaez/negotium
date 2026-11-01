@@ -5,6 +5,8 @@ services:
     # Reason: host network reaches LiteLLM, Home Assistant and speech on the box.
     network_mode: host
     init: true
+    # Reason: Chromium crashes on real sites with Docker's 64 MB default; the container is its sandbox.
+    shm_size: "1gb"
     environment:
       HOME: /home/node
       OPENCLAW_STATE_DIR: /home/node/.openclaw

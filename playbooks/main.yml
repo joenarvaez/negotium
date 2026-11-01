@@ -39,7 +39,8 @@
     ha_version: "stable"
     wyoming_openai_version: "latest"
     timezone: "America/Chicago"
-    openclaw_version: "latest"
+    # The -browser image ships Chromium, so the agent can browse and log into accounts (system_adr.md §6).
+    openclaw_version: "latest-browser"
     vitals_python_version: "3.13-slim"
   vars_files:
     - secrets.yml

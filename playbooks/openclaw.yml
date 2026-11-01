@@ -254,3 +254,10 @@
   failed_when: privacy_check.stdout != "ready"
   changed_when: false
   tags: [openclaw]
+
+- name: Verify the agent's browser opens a page
+  command: docker exec openclaw-openclaw-1 node dist/index.js browser open https://example.com
+  register: browser_check
+  failed_when: "'opened:' not in browser_check.stdout"
+  changed_when: false
+  tags: [openclaw]
