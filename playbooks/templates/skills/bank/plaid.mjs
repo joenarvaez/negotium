@@ -6,6 +6,7 @@ const DIR = "/home/node/.openclaw/workspace/finance";
 const ITEMS = `${DIR}/.items.json`;
 const PENDING = `${DIR}/.pending-link`;
 const USER = `${DIR}/.user.json`;
+const OWNER = "negotium-owner";
 const { PLAID_CLIENT_ID, PLAID_SECRET, PLAID_ENV } = process.env;
 const [cmd] = process.argv.slice(2);
 
@@ -22,12 +23,12 @@ async function plaid(path, body = {}) {
 
 const linkRequest = extra => ({
   client_name: "negotium", language: "en", country_codes: ["US"],
-  user: { client_user_id: "owner" }, products: ["transactions"], ...extra,
+  user: { client_user_id: OWNER }, products: ["transactions"], ...extra,
 });
 // Reason: linking several banks in one session (Multi-Item Link) needs a Plaid user, made once.
 async function plaidUser() {
   if (existsSync(USER)) return JSON.parse(readFileSync(USER, "utf8")).user_id;
-  const { user_id } = await plaid("/user/create", { client_user_id: "negotium-owner" });
+  const { user_id } = await plaid("/user/create", { client_user_id: OWNER });
   writeFileSync(USER, JSON.stringify({ user_id }), { mode: 0o600 });
   return user_id;
 }
