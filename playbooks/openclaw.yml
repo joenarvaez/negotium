@@ -191,7 +191,10 @@
   tags: [openclaw]
 
 - name: Patch in the keys we own if they drifted
-  command: docker exec -i openclaw-openclaw-1 node dist/index.js config patch --stdin
+  # Reason: the model list is ours; replace it whole so removed models go too.
+  command: >
+    docker exec -i openclaw-openclaw-1 node dist/index.js config patch --stdin
+    --replace-path models.providers.litellm.models
   args:
     stdin: "{{ lookup('template', 'openclaw.json.j2') }}"
   vars:

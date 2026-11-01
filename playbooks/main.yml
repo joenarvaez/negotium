@@ -1,8 +1,8 @@
 # negotium personal server.
 # Steps run in dependency order; each ends with a verify task.
-#   (Strata, the local model, is installed by tooling-playbooks.)
+#   (Ollama, the local model server, is installed by tooling-playbooks.)
 #   2. presidio — PII masking
-#   3. litellm  — model gateway (needs Strata and 2)
+#   3. litellm  — model gateway (needs Ollama and 2)
 #   4. speech   — Whisper + Kokoro
 #   5. home assistant (needs 3, 4)
 #   6. openclaw (needs 3, Twilio, privacy.com)
@@ -16,7 +16,10 @@
     # Reason: pinned because templates/litellm-presidio.py is this version's file plus
     # BerriAI/litellm PR #32014 (unmask tool-call arguments). Drop both once it merges.
     litellm_version: "v1.106.6"
-    strata_model: "qwen3.8-flash-next-coder-iq1_m"
+    # Local model in Ollama for passwords and quick private tasks (system_adr.md §3, §4).
+    # Reason: the box's Ollama listens on 11435 behind Caddy (11434); talk to it directly.
+    ollama_host: "127.0.0.1:11435"
+    local_llm_name: "qwen3:8b"
     qwen_model: "qwen3.8-max"
     # Phone turns must answer in seconds; the max model takes ~20s through OpenClaw.
     qwen_fast_model: "qwen3.8-flash"

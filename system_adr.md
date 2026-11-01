@@ -20,7 +20,7 @@ Presidio runs as a LiteLLM guardrail and swaps personal data for placeholders (`
 
 *Why.* Competent agents matter more than perfect secrecy. A masked prompt that lets a detail or two slip is acceptable; a copy of the records leaving the box is not.
 
-Vitals, medical records and bank data are stored only on the personal server. Agents read them there and send masked prompts to rented models. Passwords never go to any model but Strata.
+Vitals, medical records and bank data are stored only on the personal server. Agents read them there and send masked prompts to rented models. Passwords never go to any model but the local one (Ollama on the server).
 
 ### §4. Model per tool
 
@@ -30,7 +30,7 @@ Vitals, medical records and bank data are stored only on the personal server. Ag
 |---|---|
 | OpenClaw, Nanobrowser | Qwen |
 | OpenCode, Open Design, Goose | DeepSeek |
-| Hold detection, passwords | Strata (local) |
+| Passwords | local (Ollama) |
 
 ### §5. Home Assistant owns voice, OpenClaw is the brain
 

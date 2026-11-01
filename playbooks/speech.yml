@@ -1,6 +1,6 @@
 # Step 4 — speech_io: Whisper (speech to text) + Kokoro (text to speech).
 # One Speaches container serves both over the OpenAI audio API, on CPU
-# (Strata has the GPUs). Bound to localhost: Home Assistant and OpenClaw call it.
+# (the GPUs are for local models). Bound to localhost: Home Assistant and OpenClaw call it.
 
 - name: Create speech directory
   file:

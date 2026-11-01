@@ -17,11 +17,10 @@ model_list:
       model: openai/{{ qwen_model }}
       api_base: {{ dashscope_base_url }}
       api_key: os.environ/DASHSCOPE_API_KEY
-  - model_name: strata
+  - model_name: local
     litellm_params:
-      model: openai/{{ strata_model }}
-      api_base: http://127.0.0.1:8090/v1
-      api_key: os.environ/STRATA_API_KEY
+      model: ollama_chat/{{ local_llm_name }}
+      api_base: http://{{ ollama_host }}
 
 guardrails:
   - guardrail_name: presidio-pii
