@@ -135,6 +135,15 @@
     job: docker exec openclaw-openclaw-1 node /home/node/.openclaw/workspace/skills/bank/plaid.mjs sync >/dev/null 2>&1
   tags: [openclaw]
 
+- name: Copy the pangram skill
+  copy:
+    src: templates/skills/pangram/
+    dest: "{{ docker_dir }}/openclaw/state/workspace/skills/pangram/"
+    owner: "1000"
+    group: "1000"
+    mode: "0644"
+  tags: [openclaw]
+
 - name: Copy the aws skill
   copy:
     src: templates/skills/aws/
@@ -336,5 +345,12 @@
   command: docker exec openclaw-openclaw-1 node /home/node/.openclaw/workspace/skills/bank/plaid.mjs check
   register: plaid_check
   failed_when: plaid_check.stdout != "ready"
+  changed_when: false
+  tags: [openclaw]
+
+- name: Verify the pangram skill reaches Pangram
+  command: docker exec openclaw-openclaw-1 node /home/node/.openclaw/workspace/skills/pangram/pangram.mjs check
+  register: pangram_check
+  failed_when: pangram_check.stdout != "ready"
   changed_when: false
   tags: [openclaw]
