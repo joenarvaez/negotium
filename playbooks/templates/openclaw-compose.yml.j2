@@ -23,6 +23,9 @@ services:
       AWS_ACCESS_KEY_ID: "{{ aws_access_key_id }}"
       AWS_SECRET_ACCESS_KEY: "{{ aws_secret_access_key }}"
       AWS_DEFAULT_REGION: "{{ aws_region }}"
+      PLAID_CLIENT_ID: "{{ plaid_client_id }}"
+      PLAID_SECRET: "{{ plaid_secret }}"
+      PLAID_ENV: "{{ plaid_env }}"
       TZ: "{{ timezone }}"
     volumes:
       - ./state:/home/node/.openclaw
