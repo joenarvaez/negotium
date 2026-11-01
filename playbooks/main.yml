@@ -35,6 +35,7 @@
     whisper_model: "Systran/faster-distil-whisper-small.en"
     kokoro_model: "speaches-ai/Kokoro-82M-v1.0-ONNX"
     kokoro_voice: "af_heart"
+    kokoro_spanish_voice: "ef_dora"
     ha_version: "stable"
     wyoming_openai_version: "latest"
     timezone: "America/Chicago"

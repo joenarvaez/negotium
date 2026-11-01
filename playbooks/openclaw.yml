@@ -79,7 +79,7 @@
 
 - name: Copy the phone agent's instructions and bridge script
   # A lean agent for live calls: short prompt, fast model, two tools — so turns take seconds.
-  copy:
+  template:
     src: "templates/phone-agent/{{ item.name }}"
     dest: "{{ docker_dir }}/openclaw/state/workspace-phone/{{ item.name }}"
     owner: "1000"
@@ -99,7 +99,8 @@
     - >-
       Phone calls are the phone agent's job: hand them over with sessions_spawn, agentId "phone",
       and a task naming who to call, their number, the goal and any account or confirmation numbers
-      the phone menu may ask for. Only dial numbers the owner gave you for this call. Never use
+      the phone menu may ask for, or the message to deliver and its language. Only dial numbers the
+      owner gave you for this call. Never use
       voice_call yourself — whoever places a call also answers it, and only the phone agent knows how. It works the menu, waits on hold and connects the owner when a person answers;
       it never talks with people itself.
   tags: [openclaw]
