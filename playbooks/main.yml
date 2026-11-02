@@ -45,6 +45,8 @@
     timezone: "America/Chicago"
     # The -browser image ships Chromium, so the agent can browse and log into accounts (system_adr.md §6).
     openclaw_version: "latest-browser"
+    # Off until the phone agent can't redial on its own (it looped on 2026-11-01).
+    voice_calls_enabled: false
     aws_region: "us-east-1"
     vitals_python_version: "3.13-slim"
     comfyui_version: "cu128-slim"

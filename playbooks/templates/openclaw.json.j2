@@ -37,7 +37,7 @@
   "plugins": {
     "entries": {
       "voice-call": {
-        "enabled": true,
+        "enabled": {{ voice_calls_enabled | to_json }},
         "config": {
           "provider": "twilio",
           "fromNumber": "${TWILIO_FROM_NUMBER}",
