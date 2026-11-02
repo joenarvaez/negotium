@@ -10,6 +10,8 @@ cloud deepseek
 cloud qwen
 cloud privacy.com
 cloud pangram
+cloud plaid
+cloud deepgram
 node tailscale
 rectangle laptop {
     rectangle goose
@@ -23,13 +25,16 @@ rectangle laptop {
 
 rectangle phone {
     rectangle openclaw_client
+    rectangle hc_webhook
 }
 rectangle lan #line.dashed {
     rectangle smart_speaker {
         rectangle home_assistant_voice
     }
     rectangle personal_server #line.dashed {
-        rectangle strata
+        rectangle local
+        rectangle vitals
+        rectangle comfyui
         rectangle openclaw
         rectangle presidio
         rectangle speech_io {
@@ -51,13 +56,19 @@ tailscale -d- openclaw
 tailscale -d- litellm
 litellm -d- presidio
 litellm - openclaw
-litellm -- strata
+litellm -- local
 presidio --d- deepseek
 presidio --d- qwen
 openclaw -d-- twilio
 openclaw -d-- privacy.com
 openclaw - pangram
 home_assistant_voice -d- home_assistant
+hc_webhook -d- tailscale
+tailscale -d- vitals
+vitals - openclaw
+openclaw -d-- plaid
+openclaw -d-- deepgram
+tailscale -d- comfyui
 
 ```
 
@@ -69,7 +80,6 @@ participant openclaw_client
 participant openclaw
 participant speech_io
 participant litellm
-participant strata
 participant qwen
 participant twilio
 actor airline
@@ -94,7 +104,7 @@ loop on hold
     airline -> openclaw : audio
     openclaw -> speech_io : whisper
     openclaw -> litellm : hold music or human?
-    litellm -> strata : local only
+    litellm -> qwen : masked prompt
 end
 
 openclaw -> airline : "one moment, connecting you"
