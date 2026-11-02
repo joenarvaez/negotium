@@ -33,7 +33,15 @@
   delay: 5
   tags: [comfyui]
 
+- name: Check whether the image model is downloaded
+  stat:
+    path: "{{ docker_dir }}/comfyui/storage/ComfyUI/models/checkpoints/{{ comfyui_model_url | basename }}"
+  register: comfyui_model
+  tags: [comfyui]
+
 - name: Download the image model
+  # Reason: get_url re-fetches the whole file to compare it; at 17 GB that's half an hour per run.
+  when: not comfyui_model.stat.exists
   get_url:
     url: "{{ comfyui_model_url }}"
     dest: "{{ docker_dir }}/comfyui/storage/ComfyUI/models/checkpoints/{{ comfyui_model_url | basename }}"
